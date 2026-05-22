@@ -1,0 +1,14 @@
+temp/
+.Rhistory
+.RData
+.Rproj.user/
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+.DS_Store
+__pycache__/
+*.pyc
