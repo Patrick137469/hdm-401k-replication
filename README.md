@@ -6,6 +6,12 @@ This repository is a reproducible replication package for the 401(k) plan partic
 
 Chernozhukov, Victor, Christian Hansen, and Martin Spindler. 2016. "High-Dimensional Metrics in R." *The R Journal* 8(2):185-199.
 
+Paper URL: https://journal.r-project.org/articles/RJ-2016-040/
+
+Original code source: https://github.com/MartinSpindler/hdm/blob/master/doc/hdm.Rnw
+
+Package data source: https://github.com/MartinSpindler/hdm/blob/master/data/pension.rda
+
 ## Data Source
 
 The input file `input/pension.rda` is a local copy of the `pension` dataset distributed with the `hdm` R package. The `input/` directory is treated as read-only by the replication workflow.
@@ -35,6 +41,12 @@ From the repository root:
 Rscript code/preprocess.R
 Rscript code/analysis.R
 make
+```
+
+On Windows, if `Rscript` is not on PATH, run make with the full Rscript path:
+
+```sh
+make RSCRIPT="C:/Program Files/R/R-4.5.1/bin/Rscript.exe"
 ```
 
 Or run the full clean rebuild:
