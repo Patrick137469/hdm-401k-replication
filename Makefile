@@ -10,7 +10,7 @@ temp/analysis_data.rds output/tables/data_summary.tex: input/pension.rda code/pr
 output/tables/main_result.tex: temp/analysis_data.rds code/analysis.R
 	"$(RSCRIPT)" code/analysis.R
 
-paper/paper.pdf: paper/paper.tex paper/references.bib output/tables/main_result.tex output/tables/data_summary.tex
+paper/paper.pdf: paper/paper.tex paper/references.bib output/tables/main_result.tex
 	cd paper && pdflatex paper.tex
 	cd paper && bibtex paper
 	cd paper && pdflatex paper.tex

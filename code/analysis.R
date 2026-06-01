@@ -11,12 +11,7 @@ if (!requireNamespace("hdm", quietly = TRUE)) {
   stop("Package 'hdm' is required. Install it with install.packages('hdm').")
 }
 
-if (!requireNamespace("xtable", quietly = TRUE)) {
-  stop("Package 'xtable' is required. Install it with install.packages('xtable').")
-}
-
 library(hdm)
-library(xtable)
 
 analysis_data <- readRDS(analysis_file)
 pension <- analysis_data$pension
@@ -38,20 +33,23 @@ results <- data.frame(
   check.names = FALSE
 )
 
-result_table <- xtable(
-  results,
-  caption = "Replication of ATE and ATET Estimates",
-  label = "tab:main-results",
-  digits = c(0, 0, 2, 3)
+result_table <- c(
+  "\\begin{table}[h]",
+  "\\centering",
+  "\\caption{Replication of ATE and ATET Estimates for 401(k) Plan Participation}",
+  "\\begin{tabular}{lcc}",
+  "\\toprule",
+  "Treatment Effect & Estimate & Standard Error \\\\",
+  "\\midrule",
+  sprintf("ATE & %.2f & %.2f \\\\", results$Estimate[1], results$`Std. Error`[1]),
+  sprintf("ATET & %.2f & %.2f \\\\", results$Estimate[2], results$`Std. Error`[2]),
+  "\\bottomrule",
+  "\\end{tabular}",
+  "\\label{tab:main}",
+  "\\end{table}"
 )
 
-print(
-  result_table,
-  file = file.path(tables_dir, "main_result.tex"),
-  include.rownames = FALSE,
-  floating = TRUE,
-  table.placement = "!htbp"
-)
+writeLines(result_table, file.path(tables_dir, "main_result.tex"))
 
 paper_ate <- 10180.09
 paper_atet <- 12628.46

@@ -1,72 +1,115 @@
-\documentclass[11pt]{article}
+\documentclass[12pt]{article}
 
 \usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{amsmath}
 \usepackage{natbib}
 \usepackage{setspace}
-\usepackage{hyperref}
 
 \onehalfspacing
 
-\title{Replicating ATE and ATET Estimates from High-Dimensional Metrics in R}
+\title{Replicating ATE and ATET Estimates from \textit{High-Dimensional Metrics in R}}
 \author{Patrick Michael}
 \date{\today}
+
 
 \begin{document}
 
 \maketitle
 
-\section{The Original Paper}
+\underline{GitHub Link:} https://github.com/Patrick137469/hdm-401k-replication.git
 
-The paper I replicate is \citet{chernozhukov2016hdm}, ``High-Dimensional Metrics in R,'' published in \textit{The R Journal}. The paper introduces and documents the \texttt{hdm} R package, which provides tools for estimation and inference in settings where researchers may have many possible control variables relative to the structure of the causal or predictive question. The paper is both methodological and applied: it explains the statistical ideas behind high-dimensional methods and then shows how those methods can be implemented in R.
+\section{Introduction}
 
-The central research question of the paper is practical: how can an applied researcher do valid inference when there are many possible controls, instruments, or technical transformations, but the final object of interest is still a low-dimensional economic parameter? In many empirical settings, the researcher cares about a treatment effect, a policy parameter, or a structural coefficient, not about every coefficient on every control. The challenge is that choosing controls poorly can create omitted-variable bias, while choosing too many controls with ordinary methods can produce unstable estimates and invalid standard errors.
+This study replicates \textbf{High-Dimensional Metrics in R} written by \textbf{Victor Chernozhukov, Christian Hansen, and Martin Spindler} and published in \textbf{The R Journal in 2016} \citep{chernozhukov2016hdm}. The paper studies high-dimensional econometric methods for prediction and causal inference when the researcher has many possible control variables.
 
-The empirical strategy in the paper is to use LASSO and related post-selection procedures to choose useful controls from a larger set of candidates. In simple terms, LASSO is a variable-selection method that penalizes large models and tends to set less useful coefficients to zero. Post-LASSO then refits a less penalized model using the selected variables. For treatment effects, the idea is not just to predict the outcome well, but also to adjust for variables that predict treatment assignment. This double-selection logic helps protect the treatment effect estimate from omitted controls that matter for either the outcome equation or the treatment equation \citep{belloni2014inference}.
+The contribution of this paper is that it gets around the following challenge: \textbf{standard regression methods can become unreliable when there are many possible controls relative to the sample size, especially when the researcher wants valid inference after variable selection}. It does this by \textbf{using rigorous LASSO and Post-LASSO methods with orthogonalized estimating equations for valid causal inference in high-dimensional settings}.
 
-\section{The Result of Interest}
+This replication focuses on \textbf{Section 6.3, the 401(k) plan participation application} from the original paper. Specifically, the paper reports that \textbf{the estimated average treatment effect (ATE) is 10,180.09 with a standard error of 1,930.68, and the estimated average treatment effect on the treated (ATET) is 12,628.46 with a standard error of 2,944.43}.
 
-This replication focuses on Section 6.3 of \citet{chernozhukov2016hdm}, the 401(k) plan participation application. Specifically, I replicate the average treatment effect (ATE) and average treatment effect on the treated (ATET) rows from that section. The application studies the relationship between participation in a 401(k) plan and total wealth using the \texttt{pension} dataset distributed with the \texttt{hdm} package.
 
-This result is worth replicating because it is a compact example of a common applied problem. Researchers often want to estimate the effect of a program or financial decision while adjusting for a set of demographic and economic characteristics. The 401(k) example is also useful pedagogically because the data are included with the package, the model can be stated clearly, and the output can be compared directly with the published table.
+\section{Data}
 
-The ATE is the average effect for the full sample or population represented by the data. In this application, it summarizes the estimated effect of 401(k) participation on total wealth for the sample as a whole. The ATET is the average treatment effect on the treated group. In this application, it summarizes the estimated effect for households that actually participated in a 401(k) plan. Reporting both quantities is useful because the overall average effect and the effect for participants may differ when treated and untreated households have different characteristics.
+The data are \textbf{the pension dataset included in the hdm R package} and contain information on \textbf{401(k) participation, 401(k) eligibility, household wealth, income, age categories, family size, education, marital status, home ownership, IRA participation, and other household characteristics}. The sample includes \textbf{9,915 observations}.
 
-\section{Data and Methods}
+The data were originally collected from \textbf{the 1991 Survey of Income and Program Participation (SIPP)}. The key variables used in the replication are \textbf{total wealth, 401(k) participation, income category controls, age category controls, family size, education indicators, marital status, two-earner household status, defined benefit pension status, IRA participation, and home ownership}.
 
-The replication uses the \texttt{pension} dataset from the \texttt{hdm} R package. The main outcome variable is \texttt{tw}, total wealth. The treatment variable is \texttt{p401}, an indicator for 401(k) participation. The data also include \texttt{e401}, an eligibility indicator that can be used as an instrument in possible extensions, although this replication focuses only on the ATE and ATET estimates.
+The original code is written in \textbf{R} and this replication reproduces the analysis in \textbf{R}.
 
-The control set contains 19 covariates: six income category indicators, four age category indicators, family size, education indicators, marital status, two-earner household status, defined benefit pension status, IRA participation, and home ownership. These controls are intended to adjust for observable differences across households that could be related both to 401(k) participation and to total wealth.
+\section{Methods}
 
-\input{../output/tables/data_summary.tex}
+The primary method is \textbf{high-dimensional treatment effect estimation using rigorous LASSO/Post-LASSO}, which does \textbf{variable selection among many possible controls while still allowing valid inference for the treatment effect}. The treatment effect methods are related to post-selection inference methods developed by \citet{belloni2014treatment}.
 
-The script \texttt{code/preprocess.R} creates the analysis-ready dataset. It loads \texttt{input/pension.rda}, checks that all required variables are present, defines the outcome, treatment, instrument, and covariate matrix, and saves the resulting analysis object to \texttt{temp/analysis\_data.rds}. It also writes Table \ref{tab:data-summary} to \texttt{output/tables/data\_summary.tex}. This keeps the descriptive statistics out of the LaTeX source and makes the paper depend on generated output rather than hand-entered summary numbers.
+The method predicts/identifies \textbf{the effect of 401(k) participation or eligibility on total wealth} by exploiting \textbf{observed household-level covariates and LASSO-based adjustment for confounding factors}.
 
-The script \texttt{code/analysis.R} reads the analysis-ready data and estimates the treatment effects using \texttt{rlassoATE} and \texttt{rlassoATET} from the \texttt{hdm} package. The formula is
-\[
-\texttt{tw} \sim \texttt{p401} + \texttt{controls} \mid \texttt{controls},
-\]
-where the controls are the 19 covariates described above. The script extracts the estimates and standard errors and writes the main replication table to \texttt{output/tables/main\_result.tex}.
+The estimating equations used in the paper are shown below:
 
-LASSO and post-LASSO are useful here because the goal is to estimate a treatment effect while controlling for a set of possible confounders. Even though the number of controls in this replication is not extremely large by modern machine-learning standards, the example demonstrates the logic of high-dimensional adjustment. The researcher can allow a richer set of candidate controls while using regularization and post-selection inference to focus on the treatment effect.
+\begin{equation}
+ATE = E[Y(1)-Y(0)]
+\end{equation}
+
+\begin{equation}
+ATET = E[Y(1)-Y(0)\mid D=1]
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $Y_i$ is \textbf{total wealth}
+    \item $D_i$ is \textbf{the treatment indicator for 401(k) participation or eligibility}
+    \item $X_i$ is \textbf{the set of household-level controls used in the pension application}
+\end{itemize}
 
 \section{Replication Results}
 
-Table \ref{tab:main-results} reports the replicated ATE and ATET estimates generated by \texttt{code/analysis.R}. The table is imported directly from the output directory, so the numerical estimates in the paper are the values produced by the R pipeline rather than values typed manually into the LaTeX file.
+The following is the replicated table/figure/results.
 
 \input{../output/tables/main_result.tex}
 
-The replicated estimates match the target values from Section 6.3 of the original paper up to rounding. This agreement confirms that the local data file, variable definitions, treatment effect functions, and formula specification reproduce the published application. The small amount of remaining difference is only numerical rounding in printed output, not a substantive difference in the computation.
+The main thing to point out is \textbf{the replicated ATE and ATET estimates match the values reported in the original paper}.
 
-\section{What I Learned}
+This result tells us in plain English that \textbf{401(k) participation or eligibility is associated with higher total wealth after adjusting for observed covariates using high-dimensional treatment effect methods}. The ATE describes the average effect for the full population, while the ATET describes the average effect for the treated group.
 
-The easiest part of the replication was running the final estimation once the correct dataset and formula were identified. The \texttt{hdm} package provides direct functions for both ATE and ATET, and the original application uses variables that are already included in the package dataset. After the outcome, treatment, and control set were fixed, the computational step was short and transparent.
+Compared to the original paper, the replicated ATE and ATET estimates are \textbf{the same} as the published estimates. Possible reasons for this include \textbf{the hdm package includes the same pension dataset and the paper provides directly reproducible R code for the 401(k) application}.
 
-The hardest part was turning a successful interactive calculation into a reproducible replication package. It is easy to run code once and copy numbers into a document, but that is not the same as a reproducible workflow. The package needed a clear directory structure, a read-only input folder, generated output tables, relative paths, a Makefile, and a paper that imports results from generated files. I also had to be careful that temporary files and LaTeX auxiliary files were ignored while the final output tables and PDF remained available.
+\section{Challenges in Replication}
 
-This replication made the value of reproducibility much more concrete. A good replication package should let another person rebuild the result with one command and inspect where every number came from. The original paper would have been easier to replicate if the exact code used for each table were linked directly next to the published application and if the paper identified the target rows, dataset object, and formula in a fully script-like way. A natural extension of this project would be to replicate the instrumental-variable LATE and LATET estimates using 401(k) eligibility as an instrument, but the current package keeps the focus on the ATE and ATET rows.
+The challenges in replicating the results were the following:
 
-\section{References}
+\begin{itemize}
+    \item \textbf{Understanding which section of the paper was narrow enough to replicate}
+    \item \textbf{Distinguishing between ATE, ATET, LATE, and LATET}
+    \item \textbf{Identifying the correct dataset, since the paper contains several empirical applications}
+    \item \textbf{Making sure the R code uses the same simple model specification as the paper}
+\end{itemize}
+
+One important lesson from the replication process is that \textbf{a paper can be easier to replicate when the authors provide the data, code, and package functions in one place, but the researcher still needs to carefully identify the exact result and model specification being replicated}.
+
+
+\section{Takeaways}
+
+The following would be the main takeaways of the paper:
+
+\begin{enumerate}
+    \item \textbf{LASSO and Post-LASSO can be used for valid inference in high-dimensional econometric settings}
+    \item \textbf{Orthogonalized treatment effect methods help estimate causal parameters after variable selection}
+    \item \textbf{In the 401(k) application, the estimated ATET is larger than the ATE, meaning the estimated effect is larger for the treated group than for the full sample}
+\end{enumerate}
+
+Overall, the paper contributes to the literature by \textbf{providing an accessible R package for high-dimensional econometric estimation, inference, instrumental variables, and treatment effects}.
+
+
+\section{Extensions}
+
+The following would be possible extensions of the paper:
+
+\begin{itemize}
+    \item \textbf{Replicate the LATE and LATET estimates using 401(k) eligibility as an instrument}
+    \item \textbf{Compare the simple model to the model with all interaction effects}
+    \item \textbf{Compare the hdm treatment effect estimates to simpler OLS or matching-based estimates}
+\end{itemize}
+
+Future work could also explore \textbf{how sensitive the 401(k) treatment effect estimates are to alternative control sets, bootstrap standard errors, or different measures of wealth}.
 
 \bibliographystyle{apalike}
 \bibliography{references}
